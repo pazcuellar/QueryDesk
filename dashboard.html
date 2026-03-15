@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QueryDesk — NL to SQL</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0e0f11;
+    --surface:   #16181c;
+    --border:    #25282f;
+    --border2:   #32363f;
+    --text:      #e2e4e9;
+    --muted:     #6b7280;
+    --accent:    #4ade80;
+    --accent-dim:#1a3d28;
+    --warn:      #fb923c;
+    --warn-dim:  #3d2010;
+    --err:       #f87171;
+    --err-dim:   #3d1010;
+    --blue:      #60a5fa;
+    --blue-dim:  #1a2a3d;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    grid-template-rows: 56px 1fr;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: .04em;
+  }
+
+  .logo-sep { color: var(--border2); margin: 0 4px; }
+
+  .logo-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: .06em;
+  }
+
+  .header-pill {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    letter-spacing: .06em;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50%      { opacity: .4; }
+  }
+
+  /* ── Main panel ── */
+  .main {
+    padding: 28px 32px;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* ── Search box ── */
+  .search-wrap {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .search-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+  }
+
+  .search-input::placeholder { color: var(--muted); }
+
+  .search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(74,222,128,.08);
+  }
+
+  .ask-btn {
+    background: var(--accent);
+    color: #0a1a10;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 22px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .05em;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    white-space: nowrap;
+  }
+
+  .ask-btn:hover   { opacity: .88; }
+  .ask-btn:active  { transform: scale(.97); }
+  .ask-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Example chips ── */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 99px;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+    white-space: nowrap;
+  }
+
+  .chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ── Result card ── */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    animation: fadeUp .25s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .result-q {
+    font-size: 13px;
+    color: var(--muted);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .status-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 9px;
+    border-radius: 99px;
+    letter-spacing: .05em;
+    flex-shrink: 0;
+  }
+
+  .badge-ok   { background: var(--accent-dim); color: var(--accent); }
+  .badge-err  { background: var(--err-dim);    color: var(--err); }
+  .badge-warn { background: var(--warn-dim);   color: var(--warn); }
+
+  .result-body { padding: 18px; }
+
+  .answer-text {
+    font-family: var(--mono);
+    font-size: 13px;
+    white-space: pre-wrap;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  .answer-big {
+    font-size: 28px;
+    font-weight: 300;
+    font-family: var(--mono);
+    color: var(--accent);
+    letter-spacing: -.01em;
+  }
+
+  .flag-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .flag-item {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: var(--warn-dim);
+    color: var(--warn);
+    border-left: 3px solid var(--warn);
+  }
+
+  /* ── SQL accordion ── */
+  .sql-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    user-select: none;
+    transition: color .15s;
+  }
+
+  .sql-toggle:hover { color: var(--blue); }
+
+  .toggle-arrow {
+    transition: transform .2s;
+    font-size: 9px;
+  }
+
+  .toggle-arrow.open { transform: rotate(90deg); }
+
+  .sql-block {
+    display: none;
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+    background: #0a0b0d;
+  }
+
+  .sql-block.open { display: block; }
+
+  .sql-code {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--blue);
+    white-space: pre-wrap;
+    line-height: 1.8;
+  }
+
+  /* ── Loading state ── */
+  .loading-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    animation: fadeUp .2s ease;
+  }
+
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .loading-steps { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+
+  .step {
+    font-size: 11px;
+    color: var(--border2);
+    transition: color .3s;
+  }
+
+  .step.active { color: var(--accent); }
+  .step.done   { color: var(--muted); }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    padding: 24px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ── Metric cards ── */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 14px 12px;
+  }
+
+  .metric-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .1em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .metric-value {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .metric-value.green { color: var(--accent); }
+  .metric-value.blue  { color: var(--blue); }
+  .metric-value.warn  { color: var(--warn); }
+  .metric-value.muted { color: var(--muted); }
+
+  /* ── Recent queries ── */
+  .recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .recent-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+
+  .recent-item:hover { border-color: var(--border2); }
+
+  .recent-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+
+  .dot-ok   { background: var(--accent); }
+  .dot-err  { background: var(--err); }
+  .dot-warn { background: var(--warn); }
+
+  .recent-q {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.45;
+    flex: 1;
+  }
+
+  .recent-time {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── Failures panel ── */
+  .failure-item {
+    border: 1px solid var(--err-dim);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: #1a0f0f;
+  }
+
+  .failure-q {
+    font-size: 12px;
+    color: var(--err);
+    margin-bottom: 5px;
+  }
+
+  .failure-err {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .empty-state {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--border2);
+    text-align: center;
+    padding: 16px 0;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Header -->
+  <header>
+    <span class="logo">QueryDesk</span>
+    <span class="logo-sep">/</span>
+    <span class="logo-sub">NL → SQL · NYC Taxi · Llama 3</span>
+    <span class="header-pill"><span class="status-dot"></span>localhost</span>
+  </header>
+
+  <!-- Main panel -->
+  <main class="main">
+
+    <div>
+      <div class="section-label">Ask your data</div>
+      <div class="search-wrap">
+        <input
+          class="search-input"
+          id="questionInput"
+          type="text"
+          placeholder="e.g. Which borough had the most pickups?"
+          autocomplete="off"
+        />
+        <button class="ask-btn" id="askBtn" onclick="submitQuestion()">
+          RUN →
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Try an example</div>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div id="resultArea"></div>
+
+  </main>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+
+    <div>
+      <div class="section-label">Eval metrics</div>
+      <div class="metric-grid" id="metricsGrid">
+        <div class="metric-card">
+          <div class="metric-label">Total runs</div>
+          <div class="metric-value muted" id="m-total">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Success rate</div>
+          <div class="metric-value green" id="m-success">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Hallucinations</div>
+          <div class="metric-value warn" id="m-hall">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Failures</div>
+          <div class="metric-value" id="m-fail" style="color:var(--err)">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Recent queries</div>
+      <div class="recent-list" id="recentList">
+        <div class="empty-state">No queries yet</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Failures</div>
+      <div id="failureList">
+        <div class="empty-state">No failures</div>
+      </div>
+    </div>
+
+  </aside>
+
+</div>
+
+<script>
+const EXAMPLES = [
+  "How many trips are in the database?",
+  "Which borough had the most pickups?",
+  "What is the average fare amount?",
+  "Show the 5 most expensive trips",
+  "How many trips were paid by credit card?",
+  "What is the average tip per borough?",
+  "Which vendor had the most trips?",
+  "How many trips happened in January 2023?",
+];
+
+// Render example chips
+const chipsEl = document.getElementById("chips");
+EXAMPLES.forEach(q => {
+  const chip = document.createElement("div");
+  chip.className = "chip";
+  chip.textContent = q;
+  chip.onclick = () => {
+    document.getElementById("questionInput").value = q;
+    submitQuestion();
+  };
+  chipsEl.appendChild(chip);
+});
+
+// Enter key support
+document.getElementById("questionInput")
+  .addEventListener("keydown", e => { if (e.key === "Enter") submitQuestion(); });
+
+// Loading steps animation
+const STEPS = [
+  "Loading schema...",
+  "Sending to Llama 3...",
+  "Validating SQL...",
+  "Running query...",
+  "Formatting result...",
+];
+
+function showLoading() {
+  const area = document.getElementById("resultArea");
+  const stepsHtml = STEPS.map((s, i) =>
+    `<div class="step" id="step-${i}">${s}</div>`
+  ).join("");
+
+  area.innerHTML = `
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <div>
+        <div class="loading-text">Pipeline running</div>
+        <div class="loading-steps">${stepsHtml}</div>
+      </div>
+    </div>`;
+
+  // Animate steps sequentially
+  STEPS.forEach((_, i) => {
+    setTimeout(() => {
+      const el = document.getElementById(`step-${i}`);
+      if (el) {
+        el.classList.add("active");
+        if (i > 0) {
+          const prev = document.getElementById(`step-${i-1}`);
+          if (prev) { prev.classList.remove("active"); prev.classList.add("done"); }
+        }
+      }
+    }, i * 700);
+  });
+}
+
+function showResult(data) {
+  const area = document.getElementById("resultArea");
+
+  const hasFlags = data.hallucination_flags && data.hallucination_flags.length > 0;
+  const isError  = !data.success;
+
+  // Badge
+  let badge = "";
+  if (isError)      badge = `<span class="status-badge badge-err">ERROR</span>`;
+  else if (hasFlags) badge = `<span class="status-badge badge-warn">WARNING</span>`;
+  else               badge = `<span class="status-badge badge-ok">SUCCESS</span>`;
+
+  // Answer display — big number for single values
+  let answerHtml = "";
+  const ans = data.final_answer || "";
+  const isSingleValue = ans.startsWith("Result: ");
+  if (isSingleValue) {
+    const val = ans.replace("Result: ", "");
+    answerHtml = `<div class="answer-big">${val}</div>`;
+  } else {
+    answerHtml = `<pre class="answer-text">${escHtml(ans)}</pre>`;
+  }
+
+  // Hallucination flags
+  let flagsHtml = "";
+  if (hasFlags) {
+    flagsHtml = `<div class="flag-list">` +
+      data.hallucination_flags.map(f =>
+        `<div class="flag-item">⚠ ${escHtml(f)}</div>`
+      ).join("") +
+      `</div>`;
+  }
+
+  // SQL accordion
+  const sqlHtml = `
+    <div class="sql-toggle" onclick="toggleSQL(this)">
+      <span class="toggle-arrow" id="arrow">▶</span>
+      <span>Generated SQL</span>
+    </div>
+    <div class="sql-block" id="sqlBlock">
+      <pre class="sql-code">${escHtml(data.sql_query || "")}</pre>
+    </div>`;
+
+  area.innerHTML = `
+    <div class="result-card">
+      <div class="result-header">
+        <span class="result-q">${escHtml(data.question)}</span>
+        ${badge}
+      </div>
+      <div class="result-body">
+        ${answerHtml}
+        ${flagsHtml}
+      </div>
+      ${sqlHtml}
+    </div>`;
+}
+
+function toggleSQL(el) {
+  const arrow = el.querySelector(".toggle-arrow");
+  const block = document.getElementById("sqlBlock");
+  const open  = block.classList.toggle("open");
+  arrow.classList.toggle("open", open);
+}
+
+async function submitQuestion() {
+  const input = document.getElementById("questionInput");
+  const btn   = document.getElementById("askBtn");
+  const q     = input.value.trim();
+  if (!q) return;
+
+  btn.disabled = true;
+  btn.textContent = "...";
+  showLoading();
+
+  try {
+    const res  = await fetch("/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: q }),
+    });
+    const data = await res.json();
+    showResult(data);
+    loadMetrics();
+  } catch (err) {
+    document.getElementById("resultArea").innerHTML =
+      `<div class="result-card">
+        <div class="result-body">
+          <pre class="answer-text" style="color:var(--err)">
+Server error — is Ollama running?
+Make sure you started: ollama serve</pre>
+        </div>
+      </div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "RUN →";
+  }
+}
+
+async function loadMetrics() {
+  try {
+    const res  = await fetch("/metrics");
+    const data = await res.json();
+
+    document.getElementById("m-total").textContent   = data.total   || "0";
+    document.getElementById("m-success").textContent = data.total ? data.success_rate + "%" : "—";
+    document.getElementById("m-hall").textContent    = data.total ? data.hallucination_rate + "%" : "—";
+
+    const failCount = data.failures ? data.failures.length : 0;
+    document.getElementById("m-fail").textContent = data.total
+      ? (data.total - Math.round(data.total * data.success_rate / 100))
+      : "0";
+
+    // Recent queries
+    const recentEl = document.getElementById("recentList");
+    if (!data.recent || data.recent.length === 0) {
+      recentEl.innerHTML = `<div class="empty-state">No queries yet</div>`;
+    } else {
+      recentEl.innerHTML = data.recent.map(r => {
+        const dotClass = r.had_hallucination ? "dot-warn" : r.success ? "dot-ok" : "dot-err";
+        return `
+          <div class="recent-item" onclick="reuseQuery('${escAttr(r.question)}')">
+            <div class="recent-dot ${dotClass}"></div>
+            <div class="recent-q">${escHtml(r.question)}</div>
+            <div class="recent-time">${r.timestamp.split(" ")[1]}</div>
+          </div>`;
+      }).join("");
+    }
+
+    // Failures
+    const failEl = document.getElementById("failureList");
+    if (!data.failures || data.failures.length === 0) {
+      failEl.innerHTML = `<div class="empty-state">No failures</div>`;
+    } else {
+      failEl.innerHTML = data.failures.map(f => `
+        <div class="failure-item">
+          <div class="failure-q">${escHtml(f.question)}</div>
+          <div class="failure-err">${escHtml(f.error || "Unknown error")}</div>
+        </div>`).join("");
+    }
+
+  } catch(e) {
+    // metrics endpoint not ready yet, that's fine
+  }
+}
+
+function reuseQuery(q) {
+  document.getElementById("questionInput").value = q;
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function escAttr(str) {
+  return String(str).replace(/'/g, "\\'");
+}
+
+// Load metrics on page open
+loadMetrics();
+
+// Check for new data every 5 seconds
+// This means after running main.py the dashboard updates automatically
+setInterval(loadMetrics, 5000);
+</script>
+</body>
+</html>
