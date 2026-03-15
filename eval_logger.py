@@ -2,7 +2,6 @@
 eval_logger.py
 --------------
 Records every question the agent processes into a structured log file.
-This is your "eval framework" — the artifact you bring to the Uber interview.
 
 Each log entry captures:
   - the question asked
