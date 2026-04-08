@@ -34,16 +34,14 @@ Inspired, I started working on QueryDesk, I wanted to understand the natural lan
 
 Run the project, open [localhost](http://localhost:8000) on your browser and you can choose an static question example or ask your own, you’ll get back the numeric answer and the sql query
 
-![Screenshot 2026-03-15 at 12.56.14 p.m..png](attachment:e1e53fdd-e574-4445-a521-ca385bd9da6b:Screenshot_2026-03-15_at_12.56.14_p.m..png)
+<img width="1273" height="675" alt="Screenshot 2026-03-15 at 12 56 14 p m" src="https://github.com/user-attachments/assets/a6816796-9ab1-4cbc-aeec-b90162c388b1" />
 
-<aside>
-💡
 
-BYOD - jump [here](https://www.notion.so/QueryDesk-A-Reusable-Natural-Language-to-SQL-Framework-324bdf93a77980888f8bc3cbcec6ed5b?pvs=21) to learn how to adapt this framework to your own dataset.
 
 </aside>
+<img width="1593" height="954" alt="Screenshot 2026-03-15 at 12 26 06 a m" src="https://github.com/user-attachments/assets/5071af44-e8b4-4b72-b70d-eba97a95af4c" />
 
-![Screenshot 2026-03-15 at 12.26.06 a.m..png](attachment:27cf32bc-2b93-4e22-8b32-2ad246d75f5f:Screenshot_2026-03-15_at_12.26.06_a.m..png)
+
 
 ## **How the pipeline works — and why it's built this way? LanGraph**
 
