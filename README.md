@@ -37,10 +37,7 @@ Run the project, open [localhost](http://localhost:8000) on your browser and you
 <img width="1273" height="675" alt="Screenshot 2026-03-15 at 12 56 14 p m" src="https://github.com/user-attachments/assets/a6816796-9ab1-4cbc-aeec-b90162c388b1" />
 
 
-
-</aside>
 <img width="1593" height="954" alt="Screenshot 2026-03-15 at 12 26 06 a m" src="https://github.com/user-attachments/assets/5071af44-e8b4-4b72-b70d-eba97a95af4c" />
-
 
 
 ## **How the pipeline works — and why it's built this way? LanGraph**
