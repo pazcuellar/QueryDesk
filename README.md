@@ -1,6 +1,6 @@
 # QueryDesk - A Reusable Natural Language to SQL Framework
 
-Paz Cuéllar - [LinkedIn](https://www.linkedin.com/in/pazcuellar/) - [GitHub](https://github.com/pazcuellar)
+Paz Cuéllar - [LinkedIn](https://www.linkedin.com/in/pazcuellar/) 
 
 <aside>
 💡
@@ -15,7 +15,8 @@ Ask your database questions in plain English. Built with LangGraph, Llama 3, and
 
 Most data is locked inside databases that only speak SQL, but not every human speaks SQL.
 
-![Screenshot 2026-03-15 at 2.04.22 a.m..png](attachment:48d684dc-f989-4415-bdd4-249595e2d9be:Screenshot_2026-03-15_at_2.04.22_a.m..png)
+<img width="1918" height="956" alt="Screenshot 2026-03-15 at 2 04 22 a m" src="https://github.com/user-attachments/assets/9874f4e5-5bb1-4b8d-85bf-266329ba9f6d" />
+
 
 Learning SQL is one of the skills that has shaped my career most. I have used it to find answers the team needed, and I have helped others build that skill too. But looking back, what SQL really taught me was not syntax. It taught me to ask questions of data, **that habit of questioning data has helped me reduce costs**, eliminate repetitive tasks, and find root causes that would have stayed invisible otherwise.
 
