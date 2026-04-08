@@ -50,7 +50,7 @@ LangGraph feels like the same intuition formalized into actual code. Instead of 
 
 **Station 1 — Schema Loader** Opens the database and reads the column names before the AI sees anything. This map gets sent to the model with every question so it never has to guess what columns exist. **Responsible for 0% column hallucination rate in testing.**
 
-**Station 2 — SQL Generator** Combines your question with the database map and sends both to Llama 3. The model reads a system prompt — an instruction manual you control — and returns a SQL query. No explanation, no formatting, just the query. (using Few Shot Prompting like they did in the [early days of QueryGPT](https://www.uber.com/mx/en/blog/query-gpt/) that could evolve into RAG)
+**Station 2 — SQL Generator** Combines your question with the database map and sends both to Llama 3. The model reads a system prompt — an instruction manual you control — and returns a SQL query. No explanation, no formatting, just the query. (using Few Shot Prompting like they did in the [early days of QueryGPT](https://www.uber.com/mx/en/blog/query-gpt/) - that could evolve into RAG)
 
 **Station 3 — SQL Validator** Scans the SQL before it touches the database. Blocks dangerous commands (DROP, DELETE, UPDATE, INSERT). Flags column names that don't exist in the schema. If blocked, the query never reaches the database.
 
