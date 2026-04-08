@@ -220,8 +220,6 @@ When you adapt this to a new dataset, the system prompt is where most of your co
 
 ## **What this framework does not do yet**
 
-Being honest about limitations is more useful than hiding them.
-
 - It does not route between models based on query complexity. Every question goes to Llama 3 8B regardless of difficulty. A production version would send simple COUNT queries to the small model and escalate complex joins to a stronger one.
 - It does not cache results. Identical questions hit the model every time.
 - It does not have a feedback mechanism. There is no way for a user to mark an answer as wrong and have that feed back into prompt improvement automatically.
@@ -247,8 +245,6 @@ What I am most proud of is not the query generation itself — it is the layer a
 
  The system validates every query before it touches real data, blocking anything dangerous. It logs every interaction with hallucination flags and error types. It measures its own accuracy and documents where it fails. When it failed — and it did fail — I identified the exact pattern, fixed it through a targeted prompt update, and verified the improvement. That loop is the part that scales.
 
-The framework is not tied to any specific dataset. The NYC taxi data included in the repository is the proving ground. Your dataset — your team's data, your company's questions — is the next one. Adapting it requires five configuration changes. Everything else carries over.
+The framework is not tied to any specific dataset. The NYC taxi data included in the repository is the proving ground. Your dataset — your team's data, your company's questions — could be next. Adapting it requires five configuration changes. Everything else carries over.
 
 If you are working on something similar, thinking about natural language interfaces for internal data, or just have a thought on what breaks in systems like this at scale — I would genuinely love to hear it.
-
-The full write-up, including the architecture, the eval results, and the failure documentation, is in the link below.
